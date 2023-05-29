@@ -5,61 +5,33 @@ using UnityEngine;
 
 public class CarController : MonoBehaviour
 {
-    public float SuspensionLength = .5f;
-    float moveSpeed = 50f;
-    float SuspensionTightness = 15f;
+    float turnSpeed = 150f;
+    float carSpeed = 25f;
+
     float movement = 0;
     float rotate = 0;
-    Rigidbody rb;
 
-    public List<Transform> SuspensionPoints;
+    Rigidbody rb;
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
+        rb.centerOfMass = Vector3.zero;
     }
+
     // Update is called once per frame
     void Update()
     {
+        transform.position = rb.position;
         movement = 0;
         rotate = 0;
         //Input WASD controls
+        movement = Input.GetAxis("Vertical") * carSpeed;
+        rotate = Input.GetAxis("Horizontal");
 
-        if(Input.GetKey(KeyCode.W))
-        {
-            movement += 1;
-        }
-        if(Input.GetKey(KeyCode.S))
-        {
-            movement -= 1;
-        }
-        if(Input.GetKey(KeyCode.D))
-        {
-            rotate += 1;
-        }
-        if(Input.GetKey(KeyCode.A))
-        {
-            rotate -= 1;
-        }
+        
+        float newRotate = rotate * turnSpeed * Time.deltaTime * Input.GetAxis("Vertical");
 
-        if(rotate!=0)
-        {
-            transform.Rotate(Vector3.up, rotate);
-        }
-        if(movement > 0)
-        {
-            rb.velocity += Vector3.forward * movement * Time.deltaTime * moveSpeed;
-        }
-
-        //Per Suspension, check if in ground and if so apply force based on distance and spring tightness
-        foreach(Transform transform in rb.GetComponentsInChildren<Transform>())
-        {
-            RaycastHit hit;
-            
-            if(Physics.Raycast(transform.position, transform.TransformDirection(Vector3.down), out hit, SuspensionLength))
-            {
-                float forceToApply = (SuspensionLength - hit.distance) * SuspensionTightness;
-                rb.AddForceAtPosition(new Vector3(0, forceToApply, 0), transform.position);
-            }
-        }
+        transform.Rotate(0, newRotate, 0, Space.World);
+        rb.AddForce(transform.forward * movement, ForceMode.Acceleration);
     }
 }
